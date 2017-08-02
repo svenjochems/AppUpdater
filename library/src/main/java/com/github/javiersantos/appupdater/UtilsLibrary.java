@@ -113,7 +113,7 @@ class UtilsLibrary {
                 res = String.format(Config.PLAY_STORE_URL, getAppPackageName(context), Locale.getDefault().getLanguage());
                 break;
             case GITHUB:
-                res = Config.GITHUB_URL + gitHub.getGitHubUser() + "/" + gitHub.getGitHubRepo() + "/releases";
+                res = Config.GITHUB_URL + gitHub.getGitHubUser() + "/" + gitHub.getGitHubRepo() + "/releases/latest";
                 break;
             case AMAZON:
                 res = Config.AMAZON_URL + getAppPackageName(context);
@@ -259,15 +259,16 @@ class UtilsLibrary {
         return recentChanges;
     }
 
-    static Update getLatestAppVersion(UpdateFrom updateFrom, String url) {
+    static Update getLatestAppVersion(Context context, UpdateFrom updateFrom, String url, GitHub gitHub) {
         if (updateFrom == UpdateFrom.XML){
             RssParser parser = new RssParser(url);
             return parser.parse();
-        } else {
+        } else if (updateFrom == UpdateFrom.JSON){
             return new JSONParser(url).parse();
+        } else {
+            return new GitHubParser(getUpdateURL(context, updateFrom, gitHub).toString()).parse();
         }
     }
-
 
     static Intent intentToUpdate(Context context, UpdateFrom updateFrom, URL url) {
         Intent intent;

@@ -63,8 +63,8 @@ class UtilsAsync {
 
         @Override
         protected Update doInBackground(Void... voids) {
-            if (updateFrom == UpdateFrom.XML || updateFrom == UpdateFrom.JSON) {
-                Update update = UtilsLibrary.getLatestAppVersion(updateFrom, xmlOrJsonUrl);
+            if (updateFrom == UpdateFrom.XML || updateFrom == UpdateFrom.JSON || updateFrom == UpdateFrom.GITHUB) {
+                Update update = UtilsLibrary.getLatestAppVersion(contextRef.get(), updateFrom, xmlOrJsonUrl, gitHub);
                 if (update != null) {
                     return update;
                 } else {

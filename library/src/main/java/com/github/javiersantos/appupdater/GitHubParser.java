@@ -17,15 +17,14 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
 
-class JSONParser {
+class GitHubParser {
     private URL jsonUrl;
 
-    private static final String KEY_LATEST_VERSION = "latestVersion";
-    private static final String KEY_LATEST_VERSION_CODE = "latestVersionCode";
-    private static final String KEY_RELEASE_NOTES = "releaseNotes";
-    private static final String KEY_URL = "url";
+    private static final String KEY_LATEST_VERSION = "tag_name";
+    private static final String KEY_RELEASE_NOTES = "body";
+    private static final String KEY_URL = "browser_download_url";
 
-    public JSONParser(String url) {
+    public GitHubParser(String url) {
         try {
             this.jsonUrl = new URL(url);
         } catch (MalformedURLException e) {
@@ -40,19 +39,21 @@ class JSONParser {
             JSONObject json = readJsonFromUrl();
             Update update = new Update();
             update.setLatestVersion(json.getString(KEY_LATEST_VERSION).trim());
-            update.setLatestVersionCode(json.optInt(KEY_LATEST_VERSION_CODE));
-            JSONArray releaseArr = json.optJSONArray(KEY_RELEASE_NOTES);
-            if (releaseArr != null) {
-                StringBuilder builder = new StringBuilder();
-                for (int i = 0; i < releaseArr.length(); ++i) {
-                    builder.append(releaseArr.getString(i).trim());
-                    if (i != releaseArr.length() - 1)
-                        builder.append(System.getProperty("line.separator"));
+            update.setReleaseNotes(json.getString(KEY_RELEASE_NOTES).trim());
+
+            JSONArray assets = json.getJSONArray("assets");
+            String url = null;
+            for (int i = 0; i < assets.length(); i++) {
+                JSONObject asset = assets.getJSONObject(i);
+                if (asset.getString("name").endsWith(".apk")) {
+                    url = asset.getString(KEY_URL);
                 }
-                update.setReleaseNotes(builder.toString());
             }
-            URL url = new URL(json.getString(KEY_URL).trim());
-            update.setUrlToDownload(url);
+            if (url == null) {
+                url = json.getString("html_url");
+            }
+
+            update.setUrlToDownload(new URL(url));
             return update;
         } catch (IOException e) {
             Log.e("AppUpdater", "The server is down or there isn't an active Internet connection.", e);
